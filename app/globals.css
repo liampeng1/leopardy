@@ -1,0 +1,337 @@
+@import "tailwindcss";
+
+:root {
+  /* Classic game-show palette:
+     cells = #071277, dollar values = #d69f4c, text = #fff, gutters = #000.
+     Derived shades (hover/panel/edges/gold-bright) are tuned to the navy. */
+  --board-blue: #071277; /* board cell navy */
+  --board-blue-hover: #0c1aa0; /* lighter navy for clue-cell hover */
+  --gold: #d69f4c; /* harvest gold for dollar values */
+  --ink: #ffffff;
+  --ink-dim: #aeb6e0;
+  --correct: #21b069; /* jewel emerald = right */
+  --wrong: #e03b4d; /* jewel ruby = wrong */
+  --panel: #060d52; /* deep navy, sits below the cells */
+  --panel-edge: #1b27a0; /* brighter navy hairline border */
+
+  --background: #000000; /* true black gutters, as on the real board */
+  --foreground: var(--ink);
+
+  /* Seamless grain/static overlay for the board surfaces. A real tileable
+     texture (no procedural seams); composited at its native size. */
+  --board-noise: url("/board-texture.png?v=2");
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-board-blue: var(--board-blue);
+  --color-gold: var(--gold);
+  --color-gold-bright: #f2bf60;
+  --color-ink: var(--ink);
+  --color-ink-dim: var(--ink-dim);
+  --color-correct: var(--correct);
+  --color-wrong: var(--wrong);
+  --color-panel: var(--panel);
+  --color-panel-edge: var(--panel-edge);
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  color: var(--foreground);
+  font-family: var(--font-reading), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Game-show-set framing: brushed-metal columns on the sides. Shared by the page
+   body (shows in the side margins and behind the score rail) and by the open
+   clue overlay, so the cabinet sits in the same metal on both screens.
+   Vertical brush hairlines over broad vertical sheen bands give the
+   rounded-steel look. Pure CSS — no image asset. Top cornice is .wood-trim. */
+body,
+.metal-frame {
+  background-color: #3a3e45;
+  background-image:
+    /* fine vertical brush hairlines */
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.06) 0 1px,
+      rgba(0, 0, 0, 0.1) 1px 2px,
+      transparent 2px 4px
+    ),
+    /* vertical sheen columns — rounded-metal reflection across the width */
+    linear-gradient(
+      90deg,
+      #25282d 0%,
+      #4a4e57 9%,
+      #34373d 18%,
+      #565b64 30%,
+      #3a3e45 44%,
+      #4f545d 58%,
+      #2e3137 72%,
+      #4b5059 86%,
+      #292c31 100%
+    );
+  background-blend-mode: overlay, normal;
+}
+
+.font-display {
+  font-family: var(--font-display), system-ui, sans-serif;
+}
+.font-clue {
+  font-family: var(--font-reading), system-ui, sans-serif;
+}
+.font-ui {
+  font-family: var(--font-reading), system-ui, sans-serif;
+}
+.font-hand {
+  font-family: var(--font-hand), "Comic Sans MS", cursive;
+}
+
+/* Gold dollar values with the classic hard drop shadow */
+.value-gold {
+  color: var(--gold);
+  text-shadow: 4px 5px 0 rgba(0, 0, 0, 0.65);
+}
+
+/* Main board dollar values: a heavier, em-scaled hard drop shadow so it stays
+   proportional to the large per-cell font. */
+.board-value {
+  text-shadow: 0.06em 0.09em 0 rgba(0, 0, 0, 0.78);
+}
+
+/* Player score readout: white running total, red when in the hole — both with
+   the same hard drop shadow, to set player scores apart from the gold board
+   values. */
+.score-pos {
+  color: #ffffff;
+  text-shadow: 4px 5px 0 rgba(0, 0, 0, 0.65);
+}
+.score-neg {
+  color: var(--wrong);
+  text-shadow: 4px 5px 0 rgba(0, 0, 0, 0.65);
+}
+
+/* White board text (clues + category headers) carries the classic hard drop
+   shadow: near-black, offset mostly straight down, no blur. Uses em so it
+   scales with the auto-fit clue font size. */
+.text-board-shadow {
+  text-shadow: 0.03em 0.09em 0 rgba(0, 0, 0, 0.7);
+}
+
+/* Textured board surfaces: navy base + per-cell center-lift + cloudy noise,
+   so the cells read like the lit, mottled panels on the real show.
+   (Black gutters come from the page background.) */
+.clue-cell,
+.cat-header,
+.board-surface {
+  background-color: var(--board-blue);
+  background-image:
+    radial-gradient(
+      ellipse 80% 85% at 50% 42%,
+      rgba(70, 54, 162, 0.4),
+      rgba(7, 18, 119, 0) 72%
+    ),
+    var(--board-noise);
+  background-repeat: no-repeat, repeat;
+  background-size: 100% 100%, auto;
+  background-blend-mode: normal, soft-light;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.45);
+}
+.clue-cell:hover:not(:disabled) {
+  background-color: var(--board-blue-hover);
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+}
+
+/* Dark-walnut top cornice (the header band): deep
+   reddish-walnut with horizontal grain, plus a copper accent stripe along the
+   bottom lip. */
+.wood-trim {
+  position: relative;
+  background-color: #2a190d;
+  background-image:
+    /* horizontal walnut grain */
+    repeating-linear-gradient(
+      0.5deg,
+      rgba(120, 72, 34, 0) 0px,
+      rgba(120, 72, 34, 0.34) 5px,
+      rgba(60, 34, 16, 0.4) 8px,
+      rgba(150, 96, 50, 0.16) 11px,
+      rgba(120, 72, 34, 0) 22px
+    ),
+    /* tone + top-down lighting */
+    linear-gradient(180deg, #432916 0%, #2a190d 55%, #1b1007 100%);
+  border-bottom: 3px solid #c87b3a;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 200, 150, 0.15),
+    0 3px 0 rgba(0, 0, 0, 0.35),
+    0 14px 30px rgba(0, 0, 0, 0.62);
+}
+/* Row of warm marquee bulbs along the top edge of the cornice. */
+.wood-trim::before {
+  content: "";
+  position: absolute;
+  top: 5px;
+  left: 20px;
+  right: 20px;
+  height: 10px;
+  pointer-events: none;
+  background-image: radial-gradient(
+    circle,
+    rgba(255, 240, 200, 1) 0,
+    rgba(255, 216, 150, 0.98) 2px,
+    rgba(255, 168, 92, 0.4) 3.6px,
+    transparent 5.2px
+  );
+  background-size: 34px 10px;
+  background-position: center;
+  background-repeat: repeat-x;
+  filter: drop-shadow(0 0 3px rgba(255, 180, 110, 0.85));
+}
+
+/* Chunky, raised "set-prop" button. A solid same-hue ledge under the face
+   gives real depth; pressing sinks the face onto the ledge. Hue is set per
+   use with --btn-ledge (the dark edge) so gold/navy buttons share the feel. */
+.btn-3d {
+  box-shadow:
+    0 6px 0 var(--btn-ledge),
+    0 12px 22px rgba(0, 0, 0, 0.55);
+  transition:
+    transform 80ms ease,
+    box-shadow 80ms ease,
+    background-color 120ms ease;
+}
+.btn-3d:active {
+  transform: translateY(5px);
+  box-shadow:
+    0 1px 0 var(--btn-ledge),
+    0 4px 9px rgba(0, 0, 0, 0.5);
+}
+
+/* Coral backlit accent strip — the lit panels flanking the board on the set's
+   metallic side columns. */
+.coral-rail {
+  border-radius: 3px;
+  background: linear-gradient(180deg, #ff9f7d 0%, #f26a48 48%, #d24e38 100%);
+  box-shadow:
+    0 0 14px rgba(255, 120, 88, 0.55),
+    inset 0 0 5px rgba(255, 255, 255, 0.4),
+    0 6px 14px rgba(0, 0, 0, 0.5);
+}
+
+/* Solid royal-blue board surface — the canonical card on Setup/Results.
+   Sits on the black page background so the gaps read as board gutters. */
+.board-cell {
+  background: var(--board-blue);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+/* Darker inset for dense secondary content (the clue log, the chart),
+   framed by a blue edge so it still reads as part of the board. */
+.board-cell-quiet {
+  background: #050c4a;
+  border: 2px solid var(--board-blue);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+/* Contestant podium: the lit, beveled blue station each player stands behind
+   on the set. A top highlight + bottom inner shadow give it depth; the name is
+   hand-lettered across the face (.podium-name) and the gold score sits directly
+   on the blue, like every dollar value on the board. */
+.podium {
+  /* Identical lit board surface to the clue cells / category headers, so the
+     podium reads as the same blue panel as the rest of the board — no extra
+     gradient or bevel. A soft outer shadow lifts it off the metal rail. */
+  background-color: var(--board-blue);
+  background-image:
+    radial-gradient(
+      ellipse 80% 85% at 50% 42%,
+      rgba(70, 54, 162, 0.4),
+      rgba(7, 18, 119, 0) 72%
+    ),
+    var(--board-noise);
+  background-repeat: no-repeat, repeat;
+  background-size: 100% 100%, auto;
+  background-blend-mode: normal, soft-light;
+  border-radius: 8px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.55);
+}
+
+/* Hand-written name, white with a faint ink shadow so it reads on the lit
+   blue face. Shadows Into Light ships a single weight, so keep it normal —
+   faux-bold would smear the scrawl. */
+.podium-name {
+  font-family: var(--font-hand), "Comic Sans MS", cursive;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.01em;
+  /* Tight dark halo on all sides + a drop shadow so the thin scrawl reads
+     against the lit blue face. */
+  text-shadow:
+    0 0 1px rgba(0, 0, 0, 0.9),
+    1px 1px 0 rgba(0, 0, 0, 0.6),
+    -1px 1px 0 rgba(0, 0, 0, 0.6),
+    1px -1px 0 rgba(0, 0, 0, 0.6),
+    -1px -1px 0 rgba(0, 0, 0, 0.6),
+    0 3px 6px rgba(0, 0, 0, 0.65);
+}
+
+
+@keyframes pop-in {
+  0% {
+    transform: scale(0.94);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.animate-pop {
+  animation: pop-in 0.22s ease-out both;
+}
+
+@keyframes float-up {
+  0% {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.animate-up {
+  animation: float-up 0.35s ease both;
+}
+
+/* Row-by-row "scoreboard tally" reveal (standings on recap + results). */
+@keyframes rise {
+  0% {
+    transform: translateY(14px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.animate-rise {
+  animation: rise 0.32s ease-out both;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
